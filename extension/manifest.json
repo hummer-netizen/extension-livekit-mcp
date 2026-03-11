@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Voice Browser Agent",
+  "version": "1.0",
+  "description": "Talk to an AI that controls your browser",
+  "background": { "service_worker": "background.js" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "host_permissions": ["https://livekit-mcp.webfuse.it/*"],
+  "env": [
+    { "key": "LIVEKIT_URL", "value": "", "description": "LiveKit server URL (wss://...)" },
+    { "key": "TOKEN_URL", "value": "", "description": "Token generation endpoint" }
+  ]
+}
