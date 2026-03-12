@@ -157,3 +157,23 @@ Everything is on GitHub: [hummer-netizen/extension-livekit-mcp](https://github.c
 - `agent/token_server.py` -- Token generation for LiveKit rooms
 - `extension/` -- Webfuse sidebar extension (voice UI)
 - `blog/` -- This blog post
+
+## ElevenLabs Just Made This Easier
+
+As of March 2026, ElevenLabs added native MCP tool support to their Conversational AI platform. That means you can connect an ElevenLabs voice agent directly to Webfuse's Session MCP Server — no LiveKit, no custom agent code.
+
+The LiveKit approach gives you full control over the audio pipeline: custom VAD, model selection, streaming behavior. The ElevenLabs approach gives you zero infrastructure: configure tools in their dashboard, point at the MCP endpoint, done.
+
+Both use the same Webfuse MCP tools. Same 13 browser actions. The difference is where the voice stack runs.
+
+## The Bigger Picture
+
+Voice agents are growing fast. Vapi, ElevenLabs, Retell, Deepgram, LiveKit — the voice infrastructure is mature. What's missing is the _action layer_.
+
+A voice agent that can talk is a chatbot with good audio. A voice agent that can _browse_ is an assistant. It can check your calendar, fill out forms, look things up, compare prices, read documentation — anything a human does in a browser.
+
+Webfuse provides that action layer via MCP. Any voice platform that supports MCP tool calls (and most do, or will soon) can connect to a live browser session and act.
+
+The user doesn't install anything. The agent doesn't need a headless browser. It uses the user's real browser, with their real login state, in real time.
+
+That's the future: voice in, browser actions, voice out. This demo is one implementation of that idea.
