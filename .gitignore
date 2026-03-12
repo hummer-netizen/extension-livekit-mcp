@@ -1,4 +1,8 @@
 .env
+.env.local
+.venv/
 __pycache__/
-venv/
 *.pyc
+node_modules/
+.wrangler/
+agent/uv.lock

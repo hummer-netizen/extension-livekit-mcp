@@ -1,101 +1,122 @@
 """
-LiveKit voice agent with Webfuse browser control.
+Voice Browser Agent — Talk to an AI that browses for you.
 
-A voice AI agent that can see and control the user's browser.
-The user speaks commands. The agent browses, narrates what it sees,
-and responds with voice.
-
-Uses:
-- LiveKit Agents SDK for real-time voice
-- OpenAI for reasoning + tool use
-- ElevenLabs for natural TTS
-- Webfuse Session MCP for browser control
+LiveKit Agents + Webfuse MCP = voice-controlled browser.
+The user speaks. The AI sees the page, clicks, types, navigates, and narrates.
 
 Usage:
-  python agent.py dev
+  uv run python agent.py dev
+  uv run python agent.py console   # terminal-only (no browser needed)
 """
 
-import os
-import json
 import logging
+import os
+
 from dotenv import load_dotenv
-
-load_dotenv()
-
-from livekit import agents
-from livekit.agents import AgentSession, Agent, RoomInputOptions
-from livekit.agents.llm import ChatContext, ChatMessage
-from livekit.plugins import openai, silero, elevenlabs
+from livekit.agents import (
+    Agent,
+    AgentSession,
+    AgentServer,
+    JobContext,
+    JobProcess,
+    cli,
+    inference,
+)
+from livekit.agents.llm.mcp import MCPServerHTTP
+from livekit.plugins import silero
 
 logger = logging.getLogger("voice-browser-agent")
 
+load_dotenv(".env.local")
+
 MCP_URL = "https://session-mcp.webfu.se/mcp"
 
-AGENT_INSTRUCTIONS = """You are a voice-controlled browser agent. You can see and control
-a live web browser through Webfuse MCP tools.
+AGENT_INSTRUCTIONS = """You are a voice-controlled browsing assistant. You can see and control
+the user's live browser through Webfuse MCP tools.
 
-The user talks to you. You browse for them and narrate what you see and do.
+The user SPEAKS to you. You browse for them and SPEAK BACK what you find.
 
-Guidelines:
-- Keep responses SHORT and conversational — you're speaking out loud, not writing an essay.
-- Say what you see. Say what you're doing. Ask if the user wants to continue.
-- When reading page content, summarize. Don't read raw HTML or huge text blocks.
-- For navigation, confirm what loaded: "OK, I'm now on the Wikipedia page for Amsterdam."
-- If a tool call fails, explain simply and suggest an alternative.
-- Use see_domSnapshot or see_accessibilityTree to understand page structure before acting.
-- Use act_click with CSS selectors from the DOM snapshot.
+VOICE RULES (critical — you are speaking, not writing):
+- Keep responses under 3 sentences. Users are listening, not reading.
+- No bullet points, no numbered lists, no markdown. Speak naturally.
+- Say what you see. Say what you're doing. Then pause for the user.
+- Summarize content in plain language. Never read raw HTML or long text.
+- For navigation: "OK, I opened the article about clean rooms. It's about..."
+- For page content: "The top story has 750 points. It's about Malus, a clean room service."
+- When unsure: "I see a few options here. Want me to read the top story, or something else?"
+- ALWAYS pass the session_id to every tool call.
 
-Examples of good voice responses:
-- "I can see the Wikipedia page for Amsterdam. The infobox shows a population of 933,000. Want me to read a specific section?"
-- "Scrolling down... I see sections on History, Geography, and Architecture. Which one?"
-- "I clicked the link. We're on the Begijnhof page now. There's info about the Wooden House from 1528."
-- "Let me search for that. Typing 'Amsterdam hotels' into the search box... and pressing Enter."
+BROWSING TIPS:
+- Use see_domSnapshot with quality 0.1 for quick overviews (list pages, search results)
+- Use narrower CSS selectors for specific content ("article", ".comment-tree", "h1")
+- Use act_click to click links, act_type to type in inputs
+- Use navigate to go to a URL directly
+- If content is truncated, use a more specific selector
+- On Hacker News: story IDs are in vote links (vote?id=XXXXX), comments at item?id=XXXXX
 """
 
 
-class BrowserVoiceAgent(Agent):
-    """Voice agent that controls a browser via Webfuse MCP."""
-
-    def __init__(self):
+class BrowserAgent(Agent):
+    def __init__(self) -> None:
         super().__init__(instructions=AGENT_INSTRUCTIONS)
 
 
-async def entrypoint(ctx: agents.JobContext):
-    await ctx.connect()
+server = AgentServer()
 
+
+def prewarm(proc: JobProcess) -> None:
+    proc.userdata["vad"] = silero.VAD.load()
+
+
+server.setup_fnc = prewarm
+
+
+@server.rtc_session(agent_name="voice-browser")
+async def voice_browser(ctx: JobContext) -> None:
     rest_key = os.environ["WEBFUSE_REST_KEY"]
 
-    session = AgentSession(
-        stt=openai.STT(model="whisper-1"),
-        llm=openai.LLM(
-            model="gpt-4o",
-            mcp_servers=[
-                {
-                    "url": MCP_URL,
-                    "headers": {"Authorization": f"Bearer {rest_key}"},
-                }
-            ],
-        ),
-        tts=elevenlabs.TTS(
-            model="eleven_turbo_v2",
-            voice="JBFqnCBsd6RMkjVDRZzb",  # George - warm, natural
-        ),
-        vad=silero.VAD.load(),
+    # Get the Webfuse session ID from room metadata or participant metadata
+    session_id = ctx.room.metadata or ""
+    if not session_id:
+        for p in ctx.room.remote_participants.values():
+            if p.metadata:
+                session_id = p.metadata
+                break
+
+    logger.info(f"Starting voice browser agent, session_id={session_id[:16]}...")
+
+    mcp_server = MCPServerHTTP(
+        url=MCP_URL,
+        headers={"Authorization": f"Bearer {rest_key}"},
+        timeout=15,
+        sse_read_timeout=60,
     )
 
-    agent = BrowserVoiceAgent()
+    session = AgentSession(
+        # STT: user's voice -> text
+        stt=inference.STT(model="deepgram/nova-3"),
+        # LLM: reasoning + tool use
+        llm=inference.LLM(model="openai/gpt-4o"),
+        # TTS: agent's voice
+        tts=inference.TTS(
+            model="cartesia/sonic-3",
+            voice="9626c31c-bec5-4cca-baa8-f8ba9e84c8bc",
+        ),
+        vad=ctx.proc.userdata["vad"],
+        mcp_servers=[mcp_server],
+        max_tool_steps=10,
+    )
 
     await session.start(
         room=ctx.room,
-        agent=agent,
-        room_input_options=RoomInputOptions(),
+        agent=BrowserAgent(),
     )
 
     # Greet the user
     await session.say(
-        "Hi! I can see your browser. What would you like me to do?"
+        "Hey! I can see your browser. What would you like me to look at?"
     )
 
 
 if __name__ == "__main__":
-    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
+    cli.run_app(server)
