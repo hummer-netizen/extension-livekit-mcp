@@ -15,8 +15,11 @@ Usage:
   python agent.py dev
 """
 
-import os, json, logging
+import os
+import json
+import logging
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from livekit import agents
@@ -28,43 +31,37 @@ logger = logging.getLogger("voice-browser-agent")
 
 MCP_URL = "https://session-mcp.webfu.se/mcp"
 
-
-class BrowserVoiceAgent(Agent):
-    """Voice agent that controls a browser via Webfuse MCP."""
-
-    def __init__(self, session_id: str):
-        super().__init__(
-            instructions=f"""You are a voice-controlled browser agent. You can see and control
+AGENT_INSTRUCTIONS = """You are a voice-controlled browser agent. You can see and control
 a live web browser through Webfuse MCP tools.
 
 The user talks to you. You browse for them and narrate what you see and do.
 
-Keep your responses SHORT and conversational — you're speaking, not writing.
-Say what you see. Say what you're doing. Ask if the user wants to continue.
+Guidelines:
+- Keep responses SHORT and conversational — you're speaking out loud, not writing an essay.
+- Say what you see. Say what you're doing. Ask if the user wants to continue.
+- When reading page content, summarize. Don't read raw HTML or huge text blocks.
+- For navigation, confirm what loaded: "OK, I'm now on the Wikipedia page for Amsterdam."
+- If a tool call fails, explain simply and suggest an alternative.
+- Use see_domSnapshot or see_accessibilityTree to understand page structure before acting.
+- Use act_click with CSS selectors from the DOM snapshot.
 
-The Webfuse session ID is: {session_id}
+Examples of good voice responses:
+- "I can see the Wikipedia page for Amsterdam. The infobox shows a population of 933,000. Want me to read a specific section?"
+- "Scrolling down... I see sections on History, Geography, and Architecture. Which one?"
+- "I clicked the link. We're on the Begijnhof page now. There's info about the Wooden House from 1528."
+- "Let me search for that. Typing 'Amsterdam hotels' into the search box... and pressing Enter."
+"""
 
-Examples:
-- "I can see the Wikipedia page for Amsterdam. Want me to read something specific?"
-- "Scrolling down to the Architecture section... I can see a list of notable buildings."
-- "I clicked the link. We're now on the Begijnhof page. There's a nice section about the Wooden House."
-""",
-        )
-        self.session_id = session_id
+
+class BrowserVoiceAgent(Agent):
+    """Voice agent that controls a browser via Webfuse MCP."""
+
+    def __init__(self):
+        super().__init__(instructions=AGENT_INSTRUCTIONS)
 
 
 async def entrypoint(ctx: agents.JobContext):
     await ctx.connect()
-
-    # Get session ID from room metadata or participant attributes
-    session_id = ctx.room.metadata or "unknown"
-
-    # Look for session_id in participant attributes
-    for p in ctx.room.remote_participants.values():
-        sid = p.attributes.get("session_id", "")
-        if sid:
-            session_id = sid
-            break
 
     rest_key = os.environ["WEBFUSE_REST_KEY"]
 
@@ -86,7 +83,7 @@ async def entrypoint(ctx: agents.JobContext):
         vad=silero.VAD.load(),
     )
 
-    agent = BrowserVoiceAgent(session_id=session_id)
+    agent = BrowserVoiceAgent()
 
     await session.start(
         room=ctx.room,
@@ -95,7 +92,9 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     # Greet the user
-    await session.say("Hi! I can see your browser. What would you like me to do?")
+    await session.say(
+        "Hi! I can see your browser. What would you like me to do?"
+    )
 
 
 if __name__ == "__main__":

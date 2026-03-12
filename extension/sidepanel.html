@@ -17,18 +17,15 @@
     background: #1a1a2e; border: 3px solid #2a2a4a;
     display: flex; align-items: center; justify-content: center;
     font-size: 48px; cursor: pointer; transition: all 0.3s;
+    user-select: none;
   }
   #mic:hover { border-color: #ef4444; }
   #mic.active { border-color: #ef4444; background: #2e1a1a; animation: pulse 1.5s infinite; }
   #mic.speaking { border-color: #34d399; background: #1a2e1a; animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-  #status {
-    margin-top: 20px; font-size: 13px; color: #888; text-align: center;
-  }
-  #transcript {
-    margin-top: 24px; width: 100%; max-height: 200px; overflow-y: auto;
-  }
-  .t-entry { padding: 6px 0; font-size: 12px; border-bottom: 1px solid #1a1a2e; }
+  #status { margin-top: 20px; font-size: 13px; color: #888; text-align: center; min-height: 20px; }
+  #transcript { margin-top: 24px; width: 100%; max-height: 250px; overflow-y: auto; }
+  .t-entry { padding: 6px 0; font-size: 12px; border-bottom: 1px solid #1a1a2e; line-height: 1.4; }
   .t-entry.user { color: #888; }
   .t-entry.agent { color: #e0e0e0; }
   .powered { position: fixed; bottom: 12px; font-size: 10px; color: #444; }
@@ -42,6 +39,8 @@
   <div id="status">Click to start</div>
   <div id="transcript"></div>
   <div class="powered">Powered by <a href="https://webfuse.com">Webfuse</a> + <a href="https://livekit.io">LiveKit</a></div>
+  <!-- LiveKit JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>
