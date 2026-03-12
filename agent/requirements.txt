@@ -1,5 +1,11 @@
+# Voice agent
 livekit-agents>=1.0.0
 livekit-plugins-openai>=1.0.0
 livekit-plugins-silero>=1.0.0
 livekit-plugins-elevenlabs>=1.0.0
 python-dotenv
+
+# Token server
+livekit-api>=1.0.0
+fastapi>=0.115.0
+uvicorn>=0.34.0
