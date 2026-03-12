@@ -2,87 +2,98 @@
 
 ## Prerequisites
 
-- Python 3.10+
-- A [Webfuse](https://webfuse.com) Space with the Automation app enabled
-- A [LiveKit Cloud](https://cloud.livekit.io) project (free tier works)
-- An [OpenAI](https://platform.openai.com) API key
-- An [ElevenLabs](https://elevenlabs.io) API key
+- [LiveKit Cloud](https://cloud.livekit.io) account (free tier: 10k minutes/month)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) package manager
+- Python >= 3.10
+- A Webfuse space with the Automation app installed
 
-## 1. Configure Environment
-
-```bash
-cp .env.example .env
-```
-
-Fill in all values:
-
-| Variable | Where to get it |
-|----------|----------------|
-| `OPENAI_API_KEY` | [OpenAI Platform](https://platform.openai.com/api-keys) |
-| `WEBFUSE_REST_KEY` | Webfuse Studio → Space → Settings → API Keys |
-| `LIVEKIT_URL` | [LiveKit Cloud](https://cloud.livekit.io) → Project → Settings |
-| `LIVEKIT_API_KEY` | LiveKit Cloud → Project → Settings → API Keys |
-| `LIVEKIT_API_SECRET` | Same as above |
-| `ELEVENLABS_API_KEY` | [ElevenLabs](https://elevenlabs.io/app/settings/api-keys) |
-
-## 2. Install & Start the Agent
+## 1. LiveKit Cloud
 
 ```bash
-cd agent
-pip install -r requirements.txt
-python agent.py dev
+# Install LiveKit CLI
+curl -sSL https://get.livekit.io/cli | bash
+
+# Authenticate
+lk cloud auth
+
+# Create and export credentials
+lk app env -w -d agent/.env.local
 ```
 
-The agent connects to LiveKit Cloud and waits for participants.
+This creates `agent/.env.local` with `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`.
 
-## 3. Start the Token Server
+## 2. Add Webfuse key
 
-In a second terminal:
+Edit `agent/.env.local` and add:
+
+```
+WEBFUSE_REST_KEY=rk_your_space_rest_key
+```
+
+Get this from your Webfuse space settings.
+
+## 3. Install & run the agent
 
 ```bash
 cd agent
-pip install fastapi uvicorn
-uvicorn token_server:app --port 8083
+uv sync
+uv run python agent.py download-files
+uv run python agent.py dev
 ```
 
-This generates room tokens for browser clients.
+The agent registers with LiveKit Cloud and waits for rooms.
 
-## 4. Deploy the Extension
+## 4. Run the token server
 
-Deploy the `extension/` folder to your Webfuse Space. The sidepanel opens automatically.
+In another terminal:
 
-Set the extension environment variables:
-- `TOKEN_URL` → `http://localhost:8083/token` (or your deployed URL)
-- `LIVEKIT_URL` → Your LiveKit Cloud URL
+```bash
+cd agent
+uv run uvicorn token_server:app --port 8083
+```
 
-## 5. Use It
+## 5. Deploy the extension
 
-1. Open your Webfuse Space in a browser
-2. Navigate to any website
-3. Click the microphone button in the sidepanel
-4. Start talking: "What's on this page?"
+Deploy the `extension/` folder to your Webfuse space:
 
-## Changing the Voice
+```bash
+curl -X PUT "https://api.webfu.se/api/spaces/YOUR_SPACE_ID/extensions/YOUR_EXT_ID/github/" \
+  -H "Authorization: Token YOUR_REST_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"repo_url": "https://github.com/hummer-netizen/extension-livekit-mcp/extension"}'
+```
 
-The default voice is "George" (ElevenLabs). To change it:
+Set the `TOKEN_URL` env var to point to your token server.
 
-1. Browse voices at [elevenlabs.io/voice-library](https://elevenlabs.io/voice-library)
-2. Copy the voice ID
-3. Update `agent.py`: change the `voice` parameter in `elevenlabs.TTS()`
+## 6. Test
 
-## Troubleshooting
+1. Open your Webfuse space URL
+2. The sidebar shows a mic button
+3. Click it — it connects to LiveKit via WebRTC
+4. Speak: "What's on this page?"
+5. The agent reads the page and speaks back
 
-### "Connection failed" in sidepanel
-- Make sure the token server is running (`uvicorn token_server:app --port 8083`)
-- Check that `TOKEN_URL` in the extension env points to the right address
-- Check browser console for CORS errors
+## Architecture
 
-### Agent doesn't respond
-- Check the agent terminal for errors
-- Verify `WEBFUSE_REST_KEY` is correct and the Automation app is installed
-- Make sure there's an active Webfuse session (browser tab open)
+```
+User's browser
+  ↕ WebRTC (LiveKit)
+Voice Agent (Python)
+  ↕ MCP (HTTP)
+Webfuse Session MCP
+  ↕ Automation API
+User's browser tab (same one!)
+```
 
-### No audio
-- Allow microphone permissions when prompted
-- Check that your speakers/headphones are working
-- The agent needs a few seconds to process the first response
+The agent and the user's browser are connected through two channels:
+- **Voice** flows through LiveKit (WebRTC)
+- **Browser control** flows through Webfuse MCP
+
+Both target the same browser session.
+
+## Self-hosting
+
+Use `agent_selfhosted.py` instead of `agent.py`. This uses OpenAI directly
+for STT/LLM/TTS instead of LiveKit Inference. Add `OPENAI_API_KEY` to `.env.local`.
+
+For self-hosted LiveKit server, see [docs.livekit.io/transport/self-hosting](https://docs.livekit.io/transport/self-hosting/local/).
