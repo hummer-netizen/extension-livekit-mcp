@@ -83,3 +83,12 @@ The voice agent runs server-side and joins a LiveKit room. The extension sidebar
 When the LLM decides to use a browser tool, it calls the Webfuse MCP endpoint. Webfuse routes the action to the user's browser tab. The user sees the browser move while the agent narrates.
 
 The key insight: LiveKit handles the hard parts of real-time voice (turn detection, interruption handling, echo cancellation). Webfuse handles browser control. Your code is just the agent logic.
+
+## Other Integrations
+
+Webfuse MCP works with any framework. See the other demos:
+
+- **[OpenAI Agents SDK](https://github.com/hummer-netizen/extension-openai-agents-mcp)** — Build a custom agent with the OpenAI Agents SDK
+- **[Claude Desktop / Cursor / VS Code](https://github.com/hummer-netizen/extension-claude-mcp)** — Zero-code setup — just a config file
+- **[Vercel AI SDK](https://github.com/hummer-netizen/extension-vercel-ai-mcp)** — TypeScript browsing assistant for Next.js
+- **[LangChain / LangGraph](https://github.com/hummer-netizen/extension-langchain-mcp)** — Python research agent with multi-page reasoning
