@@ -195,3 +195,28 @@ Everything is on GitHub: [hummer-netizen/extension-livekit-mcp](https://github.c
 - `extension/` — Sidebar UI (mic button, transcript, visualizer)
 
 Try the demo: [webfu.se/+livekit-mcp/](https://webfu.se/+livekit-mcp/)
+
+## The Simpler Alternative: ElevenLabs + Webfuse (Zero Code)
+
+If self-hosting a LiveKit agent feels like too much, ElevenLabs just shipped native MCP support in their Conversational AI platform. That means you can connect an ElevenLabs voice agent to Webfuse with zero code:
+
+1. Go to ElevenLabs → Agents → Integrations → Add Custom MCP Server
+2. Server URL: `https://session-mcp.webfu.se/mcp`
+3. Secret Token: your Webfuse REST key
+4. Done
+
+The ElevenLabs agent gets the same 13 browser tools. No LiveKit, no Python, no server.
+
+**When to use LiveKit (this demo):**
+- You need full control over the agent logic
+- You want custom voice models or VAD
+- You're building for production with specific latency requirements
+- You need custom tool orchestration beyond what MCP provides
+
+**When to use ElevenLabs:**
+- You want the fastest path from idea to working demo
+- You're prototyping or building a showcase
+- You need natural-sounding voices out of the box
+- You want a managed platform with no infrastructure
+
+Both approaches use Webfuse as the browser layer. The difference is who runs the voice pipeline.
