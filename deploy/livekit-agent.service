@@ -1,0 +1,14 @@
+[Unit]
+Description=LiveKit Voice Browser Agent (token server on port 8003)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/deploy/projects/extension-livekit-mcp/agent
+ExecStart=/home/deploy/.local/bin/uv run uvicorn token_server:app --port 8003 --host 0.0.0.0
+Restart=on-failure
+RestartSec=5
+Environment=PATH=/home/deploy/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target
