@@ -1,0 +1,14 @@
+[Unit]
+Description=LiveKit Voice Browser Agent (connects to LiveKit Cloud)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/deploy/projects/extension-livekit-mcp/agent
+ExecStart=/home/deploy/.local/bin/uv run python agent.py dev
+Restart=on-failure
+RestartSec=10
+Environment=PATH=/home/deploy/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target
