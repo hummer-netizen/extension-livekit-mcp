@@ -20,10 +20,10 @@ The LLM has access to 13 browser tools via Webfuse's MCP endpoint. When you say 
 
 ## Stack
 
-- **LiveKit Agents** — real-time voice pipeline (STT → LLM → TTS)
-- **Webfuse Session MCP** — 13 browser tools, auto-discovered
-- **LiveKit Cloud** — WebRTC transport, deployment, inference
-- **Webfuse Extension** — sidebar UI with mic button + transcript
+- **LiveKit Agents**, real-time voice pipeline (STT → LLM → TTS)
+- **Webfuse Session MCP**, 13 browser tools, auto-discovered
+- **LiveKit Cloud**, WebRTC transport, deployment, inference
+- **Webfuse Extension**, sidebar UI with mic button + transcript
 
 ## Quick start
 
@@ -58,18 +58,18 @@ Deploy the `extension/` folder to your Webfuse space. Set the `TOKEN_URL` env va
 
 ```
 agent/
-  agent.py          — Voice agent (LiveKit + Webfuse MCP)
-  token_server.py   — Generates LiveKit room tokens
-  pyproject.toml    — Python dependencies
+  agent.py         , Voice agent (LiveKit + Webfuse MCP)
+  token_server.py  , Generates LiveKit room tokens
+  pyproject.toml   , Python dependencies
 
 extension/
-  sidepanel.html    — Voice UI (mic button, transcript, visualizer)
-  sidepanel.js      — LiveKit client connection
-  background.js     — Extension scaffold
-  manifest.json     — Webfuse extension manifest
+  sidepanel.html   , Voice UI (mic button, transcript, visualizer)
+  sidepanel.js     , LiveKit client connection
+  background.js    , Extension scaffold
+  manifest.json    , Webfuse extension manifest
 
 proxy/
-  worker.js         — Cloudflare Worker (CORS proxy for token server)
+  worker.js        , Cloudflare Worker (CORS proxy for token server)
 ```
 
 ## Live demo
@@ -84,11 +84,19 @@ When the LLM decides to use a browser tool, it calls the Webfuse MCP endpoint. W
 
 The key insight: LiveKit handles the hard parts of real-time voice (turn detection, interruption handling, echo cancellation). Webfuse handles browser control. Your code is just the agent logic.
 
-## Other Integrations
 
-Webfuse MCP works with any framework. See the other demos:
+## Other Webfuse Integrations
 
-- **[OpenAI Agents SDK](https://github.com/hummer-netizen/extension-openai-agents-mcp)** — Build a custom agent with the OpenAI Agents SDK
-- **[Claude Desktop / Cursor / VS Code](https://github.com/hummer-netizen/extension-claude-mcp)** — Zero-code setup — just a config file
-- **[Vercel AI SDK](https://github.com/hummer-netizen/extension-vercel-ai-mcp)** — TypeScript browsing assistant for Next.js
-- **[LangChain / LangGraph](https://github.com/hummer-netizen/extension-langchain-mcp)** — Python research agent with multi-page reasoning
+Webfuse MCP works with any AI framework:
+
+- **[OpenAI Agents SDK](https://github.com/webfuse-com/extension-openai-agents-mcp)** - Python agent with browser control
+- **[Claude Desktop / Cursor / VS Code](https://github.com/webfuse-com/extension-claude-mcp)** - Zero-code MCP config
+- **[LangChain / LangGraph](https://github.com/webfuse-com/extension-langchain-mcp)** - Multi-page research agent
+- **[Vercel AI SDK](https://github.com/webfuse-com/extension-vercel-ai-mcp)** - Next.js browsing assistant
+- **[LiveKit Voice Agent](https://github.com/webfuse-com/extension-livekit-mcp)** - Voice-controlled browser
+- **[ChatGPT GPT](https://github.com/webfuse-com/chatgpt-webfuse-mcp)** - Custom GPT with browser tools
+- **[WebMCP Demo](https://github.com/webfuse-com/webfuse-webmcp-demo)** - Semantic tools on any website
+
+## License
+
+MIT
