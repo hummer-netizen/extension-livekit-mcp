@@ -12,6 +12,7 @@ import os
 import time
 import logging
 
+from datetime import timedelta
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from livekit.api import LiveKitAPI, CreateRoomRequest, AccessToken, VideoGrants
@@ -62,7 +63,7 @@ async def get_token(session_id: str = Query(..., min_length=4)):
         .with_name("Browser User")
         .with_grants(VideoGrants(room_join=True, room=room_name))
         .with_metadata(session_id)
-        .with_ttl(3600)
+        .with_ttl(timedelta(seconds=3600))
     )
 
     ws_url = livekit_url
