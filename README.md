@@ -6,6 +6,14 @@ The user speaks. The AI browses. "What's on this page?" → reads it. "Open the 
 
 Voice in, browser actions out, voice back.
 
+## Prerequisites
+
+- Python 3.10+ with [uv](https://docs.astral.sh/uv/) package manager
+- A [LiveKit Cloud](https://cloud.livekit.io) account (free tier: 10k minutes/month)
+- An [OpenAI](https://platform.openai.com) API key
+- A [Webfuse](https://webfuse.com) account with a Space
+- The Automation App installed on your Space
+
 ## How it works
 
 ```
